@@ -27,14 +27,12 @@ async def main(blog_name):
     # 打开博客主页
     await page.goto('https://blog.csdn.net/%s' % blog_name)
     await page.waitFor(1000)
-    # 先找到已有文章
-    elements = await page.querySelectorAll('#articleMeList-blog > div.article-list > div')
-    article_list = []
-    for i in range(1, len(elements) + 1):
-        article = await page.querySelector('#articleMeList-blog > div.article-list > div:nth-child(%d) > h4 > a' % i)
-        article = await (await article.getProperty('textContent')).jsonValue()
-        article_list.append(str(article).strip('\n').split('\n')[1].strip())
-    print('已有文章%d篇: ' % len(article_list), article_list)
+    # 选择文章类型：原创
+    print('文章类型: 原创')
+    select_box = await page.querySelector(
+        'body > div.app.app--light > div.modal > div > div.modal__inner-2 > div.modal__content > div.inline-box > div > div')
+    await select_box.click()
+    await page.waitFor(500)
     # 点击 创作中心
     await page.click(
         '#csdn-toolbar > div > div > div.toolbar-container-right > div > div.toolbar-btn.toolbar-btn-write.csdn-toolbar-fl > a')
