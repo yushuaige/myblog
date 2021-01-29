@@ -27,12 +27,14 @@ async def main(blog_name):
     # 打开博客主页
     await page.goto('https://blog.csdn.net/%s' % blog_name)
     await page.waitFor(1000)
-    # 选择文章类型：原创
-    print('文章类型: 原创')
-    select_box = await page.querySelector(
-        'body > div.app.app--light > div.modal > div > div.modal__inner-2 > div.modal__content > div.inline-box > div > div')
-    await select_box.click()
-    await page.waitFor(500)
+    # 先找到已有文章
+    # 先找到已有文章
+    elements = await page.querySelectorAll('#articleMeList-blog > div.article-list > div > h4')
+    article_list = []
+    for article in elements:
+        article = await (await article.getProperty('textContent')).jsonValue()
+        article_list.append(str(article).strip('\n').split('\n')[2].strip())
+    print('已有文章%d篇: ' % len(article_list), article_list)
     # 点击 创作中心
     await page.click(
         '#csdn-toolbar > div > div > div.toolbar-container-right > div > div.toolbar-btn.toolbar-btn-write.csdn-toolbar-fl > a')
@@ -51,12 +53,16 @@ async def main(blog_name):
     pages_list = await browser.pages()
     page = pages_list[-1]
     # 开始写文章
+    with open('local_record.txt', 'r', encoding='utf-8') as f:
+        local_record = [title.strip() for title in f.readlines()]
     url_list = []
     for title, content, tags, category in get_local_articles():
-        if title in article_list:
+        if title in article_list or title in local_record:
             continue
         url = await write_article(page, title, content, tags, category)
         url_list.append(url)
+        with open('local_record.txt', 'a', encoding='utf-8') as f:
+            f.write('%s\n' % title)
         # 点击 再写一篇
         await page.click('#alertSuccess > div > div.pos-top > div:nth-child(4) > div.btn-new.c-blue.underline > span')
         await page.waitFor(3000)
